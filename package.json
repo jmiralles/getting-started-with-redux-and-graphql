@@ -18,7 +18,9 @@
     "react-dom": "^0.14.6",
     "react-redux": "^4.0.6",
     "redux": "^3.0.5",
-    "redux-thunk": "^1.0.3"
+    "redux-thunk": "^1.0.3",
+    "request": "^2.79.0",
+    "request-promise": "^4.1.1"
   },
   "devDependencies": {
     "webpack": "^1.12.11",

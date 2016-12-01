@@ -4,20 +4,17 @@ import { getGraph } from '../actions/actions.js';
 
 let Query = React.createClass({
   componentDidMount() {
-    this.props.dispatch(getGraph("{goldberg(id: 2) {id, character, actor, role, traits}}"));
+    this.props.dispatch(getGraph("{budget(id: 2) {id, name}}"));
   },
   render() {
     let dispatch = this.props.dispatch;
     let fetchInProgress = String(this.props.store.get('fetching'));
     let queryText;
-    let goldberg = this.props.store.get('data').toObject();
+    let budget = this.props.store.get('data').toObject();
     return (
       <div>
         <p>Fetch in progress: {fetchInProgress}</p>
-        <h3>{ goldberg.character }</h3>
-        <p>{ goldberg.actor }</p>
-        <p>{ goldberg.role }</p>
-        <p>{ goldberg.traits }</p>
+        <h3>{ budget.name }</h3>
         <input ref={node => {queryText = node}}></input>
         <button onClick={() => {dispatch(getGraph(queryText.value))}}>
           query

@@ -3,6 +3,7 @@ var WebpackDevServer = require('webpack-dev-server');
 var express = require('express');
 var graphqlHTTP = require('express-graphql');
 var graphql = require('graphql');
+var rp = require('request-promise');
 
 var GraphQLSchema = graphql.GraphQLSchema;
 var GraphQLObjectType = graphql.GraphQLObjectType;
@@ -10,95 +11,84 @@ var GraphQLString = graphql.GraphQLString;
 var GraphQLInt = graphql.GraphQLInt;
 
 
-var goldbergs = {
+var budgets = {
   1: {
-    character: "Beverly Goldberg",
-    actor: "Wendi McLendon-Covey",
-    role: "matriarch",
-    traits: "embarrasing, overprotective",
+    spent: 230,
+    color: "008F8F",
+    name: "#Financial Products",
+    value: 230,
+    startDate: "2016-12-01",
     id: 1
   },
   2: {
-    character: "Murray Goldberg",
-    actor: "Jeff Garlin",
-    role: "patriarch",
-    traits: "gruff, lazy",
+    spent: 970,
+    color: "008F8F",
+    name: "#salary",
+    value: 30,
+    startDate: "2016-12-01",
     id: 2
   },
   3: {
-    character: "Erica Goldberg",
-    actor: "Hayley Orrantia",
-    role: "oldest child",
-    traits: "rebellious, nonchalant",
+    spent: 40,
+    color: "008F8F",
+    name: "#income",
+    value: 123,
+    startDate: "2016-12-01",
     id: 3
-  },
-  4: {
-    character: "Barry Goldberg",
-    actor: "Troy Gentile",
-    role: "middle child",
-    traits: "dim-witted, untalented",
-    id: 4
-  },
-  5: {
-    character: "Adam Goldberg",
-    actor: "Sean Giambrone",
-    role: "youngest child",
-    traits: "geeky, pop-culture obsessed",
-    id: 5
-  },
-  6: {
-    character: "Albert 'Pops' Solomon",
-    actor: "George Segal",
-    role: "grandfather",
-    traits: "goofy, laid back",
-    id: 6
   }
 }
 
-function getGoldberg(id) {
-  return goldbergs[id]
+function getBudget(id) {
+
+  //"http://fm-dev.spf.strands.com/api/budgetgoals/history/all.action"
+
+  return budgets[id]
 }
 
-var goldbergType = new GraphQLObjectType({
-  name: 'Goldberg',
-  description: "Member of The Goldbergs",
+var budgetsType = new GraphQLObjectType({
+  name: 'Budget',
+  description: "Historical Budgets",
   fields: {
-    character: {
-      type: GraphQLString,
-      description: "Name of the character",
+    spent: {
+      type: GraphQLInt,
+      description: "Spent Amount",
     },
-    actor: {
+    color: {
       type: GraphQLString,
-      description: "Actor playing the character",
+      description: "Cat Color",
     },
-    role: {
+    name: {
       type: GraphQLString,
-      description: "Family role"
+      description: "Budget Category"
     },
-    traits: {
+    value: {
+      type: GraphQLInt,
+      description: "Budget Goal"
+    },
+    startDate: {
       type: GraphQLString,
-      description: "Traits this Goldberg is known for"
+      description: "Start Date",
     },
     id: {
       type: GraphQLInt,
-      description: "ID of this Goldberg",
+      description: "ID of this Budget",
     }
   }
 });
 
 var queryType = new GraphQLObjectType({
   name: 'query',
-  description: "Goldberg query",
+  description: "Budget query",
   fields: {
-    goldberg: {
-      type: goldbergType,
+    budget: {
+      type: budgetsType,
       args: {
         id: {
           type: GraphQLInt
         }
       },
       resolve: function(_, args){
-        return getGoldberg(args.id)
+        return getBudget(args.id)
       }
     }
   }
@@ -108,9 +98,42 @@ var schema = new GraphQLSchema({
   query: queryType
 });
 
+var fetchDataFromAPI = function() {
+  console.log("FETCH BUDGETS");
+  var options = {
+  uri: "http://fm-dev.spf.strands.com/api/budgetgoals/history/all.action",
+  method: 'GET',
+  json: true,
+  headers: {
+    "Content-type": "application/json;charset=utf-8",
+    "HTTP_STRANDS_USER": "testUserBU1"
+    }
+  };
+
+  rp(options).then(function(res) {
+    console.log(res);
+  })
+}
 var graphQLServer = express();
-graphQLServer.use('/', graphqlHTTP({ schema: schema, graphiql: true }));
-graphQLServer.listen(8080);
+graphQLServer.use('/', (req, res, next) => {
+  console.log("req", req);
+
+  /*switch (req.body.entity) {
+    case 'budgets':
+      fetchBudgetsFromAPI();
+      break;
+    case 'transactions':
+      fetchTransactionsFromAPI();
+      break;
+    default:
+      next();
+  }*/
+
+  next();
+});
+
+graphQLServer.use(graphqlHTTP({ schema: schema, graphiql: true }));
+graphQLServer.listen(8081);
 console.log("The GraphQL Server is running.")
 
 var compiler = webpack({
@@ -130,7 +153,7 @@ var compiler = webpack({
 
 var app = new WebpackDevServer(compiler, {
   contentBase: '/public/',
-  proxy: {'/graphql': `http://localhost:${8080}`},
+  proxy: {'/graphql': `http://localhost:${8081}`},
   publicPath: '/static/',
   stats: {colors: true}
 });
